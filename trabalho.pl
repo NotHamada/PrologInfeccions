@@ -1,44 +1,51 @@
-% Define predicates for reading and writing lines to a file
+sintoma(febre).
+sintoma(tosse).
+sintoma(dor_de_cabeca).
+sintoma(fadiga).
 
-% Read lines from a file
-read_lines(File, Lines) :-
-    open(File, read, Stream),
-    read_lines(Stream, Lines),
-    close(Stream).
+pergunta(febre) :-
+    write('Você está com febre? (sim/nao): '),
+    read(Resposta),
+    Resposta = sim.
 
-read_lines(Stream, []) :-
-    at_end_of_stream(Stream).
+pergunta(tosse) :-
+    write('Você está tossindo? (sim/nao): '),
+    read(Resposta),
+    Resposta = sim.
 
-read_lines(Stream, [Line|Rest]) :-
-    \+ at_end_of_stream(Stream),
-    read_line_to_codes(Stream, Line),
-    read_lines(Stream, Rest).
+pergunta(dor_de_cabeca) :-
+    write('Você está com dor de cabeça? (sim/nao): '),
+    read(Resposta),
+    Resposta = sim.
 
-% Append a line to a file
-append_line(File, Line) :-
-    open(File, append, Stream),
-    write(Stream, Line),
-    nl(Stream), % Add a newline after the line
-    close(Stream).
+pergunta(fadiga) :-
+    write('Você está se sentindo cansado ou com fadiga? (sim/nao): '),
+    read(Resposta),
+    Resposta = sim.
 
-% Example usage:
-% Read lines from a file and append a new line
-example(File) :-
-    read_lines(File, Lines),
-    writeln('Contents of the file:'),
-    maplist(writeln, Lines),
-    append_line(File, 'This is a new line added by Prolog.'),
-    writeln('Line added successfully.').
+possivel_doenca(gripe) :-
+    sintoma(febre),
+    sintoma(tosse),
+    sintoma(fadiga).
 
-perguntar_sintoma(Sintoma) :-
-  write('Você está com '), write(Sintoma), write('? (sim/nao) '),
-  read(Resposta),
-  ( Resposta = 'sim' -> assert(sintoma(Sintoma)); true ).
-  
-iterar_lista([Head | Tail]) :-
-  perguntar_sintoma(Head),
-  iterar_lista(Tail).
+possivel_doenca(resfriado) :-
+    sintoma(tosse),
+    sintoma(dor_de_cabeca).
 
+possivel_doenca(enxaqueca) :-
+    sintoma(dor_de_cabeca),
+    sintoma(fadiga).
+
+diagnostico :-
+    pergunta(Sintoma),
+    possivel_doenca(Doenca),
+    write('Baseado nos sintomas informados, você pode ter '), write(Doenca), nl,
+    fail.
+
+start :-
+    write('Responda as seguintes perguntas para fazer um diagnóstico:'), nl,
+    diagnostico,
+    write('Fim do diagnóstico.'), nl.
 
 nausea(true).
 vomito(true).
