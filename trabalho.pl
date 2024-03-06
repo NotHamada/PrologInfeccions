@@ -1,3 +1,22 @@
+read_file(File, Content) :-
+    open(File, read, Stream),
+    read_lines(Stream, Content),
+    close(Stream).
+
+read_lines(Stream, []) :-
+    at_end_of_stream(Stream).
+
+read_lines(Stream, [Line|Rest]) :-
+    \+ at_end_of_stream(Stream),
+    read_line_to_string(Stream, Line),
+    read_lines(Stream, Rest).
+
+append_to_file(File, Line) :-
+    open(File, append, Stream),
+    write(Stream, Line),
+    write(Stream, '\n'),
+    close(Stream).
+
 sintoma(febre).
 sintoma(tosse).
 sintoma(dor_de_cabeca).
