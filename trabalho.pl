@@ -17,83 +17,63 @@ append_to_file(File, Line) :-
     write(Stream, '\n'),
     close(Stream).
 
-sintoma(febre).
-sintoma(tosse).
-sintoma(dor_de_cabeca).
-sintoma(fadiga).
+% Definição de sintomas e suas doenças correspondentes
+sintoma(1, febre).
+sintoma(2, tosse).
+sintoma(3, dor_de_cabeca).
+sintoma(4, fadiga).
 
-pergunta(febre) :-
-    write('Você está com febre? (sim/nao): '),
-    read(Resposta),
-    Resposta = sim.
+doenca(gripe, [1, 2, 4]).
+doenca(resfriado, [2, 3]).
+doenca(enxaqueca, [3, 4]).
 
-pergunta(tosse) :-
-    write('Você está tossindo? (sim/nao): '),
-    read(Resposta),
-    Resposta = sim.
+% Predicado para verificar se uma doença é possível com base nos sintomas escolhidos
+possivel_doenca(SintomasEscolhidos, Doenca) :-
+    doenca(Doenca, SintomasDaDoenca),
+    subset(SintomasEscolhidos, SintomasDaDoenca).
 
-pergunta(dor_de_cabeca) :-
-    write('Você está com dor de cabeça? (sim/nao): '),
-    read(Resposta),
-    Resposta = sim.
+% Verifica se todos os elementos de Lista1 estão contidos em Lista2
+subset([], _).
+subset([H|T], List) :-
+    member(H, List),
+    subset(T, List).
 
-pergunta(fadiga) :-
-    write('Você está se sentindo cansado ou com fadiga? (sim/nao): '),
-    read(Resposta),
-    Resposta = sim.
+% Predicado principal para fazer o diagnóstico
+diagnostico(SintomasEscolhidos) :-
+    write('Possíveis doenças com base nos sintomas escolhidos:'), nl,
+    findall(Doenca-Probabilidade, (doenca(Doenca, _), probabilidade_doenca(SintomasEscolhidos, Doenca, Probabilidade)), DoencasProbabilidades),
+    print_doencas_probabilidades(DoencasProbabilidades).
 
-possivel_doenca(gripe) :-
-    sintoma(febre),
-    sintoma(tosse),
-    sintoma(fadiga).
+% Predicado para imprimir as doenças possíveis com suas probabilidades
+print_doencas_probabilidades([]).
+print_doencas_probabilidades([Doenca-Probabilidade|T]) :-
+    format('~w: ~2f%~n', [Doenca, Probabilidade]),
+    print_doencas_probabilidades(T).
 
-possivel_doenca(resfriado) :-
-    sintoma(tosse),
-    sintoma(dor_de_cabeca).
+% Predicado para converter uma string de números separados por vírgula em uma lista de números
+string_para_lista_numero(String, Lista) :-
+    atomic_list_concat(StringList, ',', String),
+    maplist(atom_number, StringList, Lista).
 
-possivel_doenca(enxaqueca) :-
-    sintoma(dor_de_cabeca),
-    sintoma(fadiga).
+probabilidade_doenca(SintomasEscolhidos, Doenca, Probabilidade) :-
+    doenca(Doenca, SintomasDaDoenca),
+    intersection(SintomasDaDoenca, SintomasEscolhidos, SintomasCorrespondentes),
+    length(SintomasCorrespondentes, NumCorrespondentes),
+    length(SintomasEscolhidos, NumTotal),
+    (NumTotal > 0 -> Probabilidade is NumCorrespondentes / NumTotal * 100; Probabilidade is 0).
 
-diagnostico :-
-    pergunta(Sintoma),
-    possivel_doenca(Doenca),
-    write('Baseado nos sintomas informados, você pode ter '), write(Doenca), nl,
-    fail.
+% Predicado inicial
+:- initialization(main).
 
-start :-
-    write('Responda as seguintes perguntas para fazer um diagnóstico:'), nl,
-    diagnostico,
-    write('Fim do diagnóstico.'), nl.
-
-nausea(true).
-vomito(true).
-febre(true).
-dor_de_cabeca(true).
-dor_muscular(true).
-rash_cutaneo(true).
-tosse(true).
-dificuldade_para_respirar(true).
-fadiga(true).
-perda_de_peso(true).
-ferida_genital_dolorosa(true).
-ferida_genital_indolor(true).
-ferida_genital(true).
-ictericia(true).
-suores_noturnos(true).
-feridas_na_pele(true).
-dor_ao_urinar(true).
-verrugas_genitais(true).
-inchaco_dos_linfonodos(true).
-corrimento_genital(true).
-
-doenca(aids, [fadiga, perda_de_peso, febre, suores_noturnos]).
-doenca(cancro_mole, [ferida_genital_dolorosa]).
-doenca(corrimento, [corrimento_genital]).
-doenca(donovanose, [ferida_genital_indolor]).
-doenca(hepatite_b, [fadiga, nausea, vomito, ictericia]).
-doenca(herpes, [feridas_na_pele]).
-doenca(linfogranuloma, [inchaco_dos_linfonodos]).
-doenca(papilomavirus, [verrugas_genitais]).
-doenca(sifilis, [ferida_genital, rash_cutaneo]).
-doenca(uretrite, [dor_ao_urinar]).
+main :-
+    write('Lista de sintomas disponíveis:'), nl,
+    write('1. Febre'), nl,
+    write('2. Tosse'), nl,
+    write('3. Dor de cabeça'), nl,
+    write('4. Fadiga'), nl,
+    write('Escolha os sintomas que possui (digite os números separados por vírgula): '),
+    read_string(user_input, "\n", "\r", _, SintomasString),
+    string_para_lista_numero(SintomasString, SintomasEscolhidos), 
+    diagnostico(SintomasEscolhidos),
+    write('Fim do diagnóstico.'), nl,
+    halt.
