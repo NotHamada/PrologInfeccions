@@ -116,7 +116,8 @@ doenca("Uretrite", [39], [11]).
 
 % Predicado para verificar se uma doença é possível com base nos sintomas escolhidos
 possivel_doenca(SintomasEscolhidos, Doenca) :-
-    doenca(Doenca, SintomasDaDoenca),
+    doenca(Doenca, SintomasDaDoenca, TipoInfeccao),
+    print(TipoInfeccao),
     subset(SintomasEscolhidos, SintomasDaDoenca).
 
 % Verifica se todos os elementos de Lista1 estão contidos em Lista2
@@ -128,7 +129,7 @@ subset([H|T], List) :-
 % Predicado principal para fazer o diagnóstico
 diagnostico(SintomasEscolhidos) :-
     write('Possíveis doenças com base nos sintomas escolhidos:'), nl,
-    findall(Doenca-Probabilidade, (doenca(Doenca, _), probabilidade_doenca(SintomasEscolhidos, Doenca, Probabilidade)), DoencasProbabilidades),
+    findall(Doenca-Probabilidade, (doenca(Doenca, _, _), probabilidade_doenca(SintomasEscolhidos, Doenca, Probabilidade)), DoencasProbabilidades),
     print_doencas_probabilidades(DoencasProbabilidades).
 
 % Predicado para imprimir as doenças possíveis com suas probabilidades
@@ -143,22 +144,71 @@ string_para_lista_numero(String, Lista) :-
     maplist(atom_number, StringList, Lista).
 
 probabilidade_doenca(SintomasEscolhidos, Doenca, Probabilidade) :-
-    doenca(Doenca, SintomasDaDoenca),
+    doenca(Doenca, SintomasDaDoenca, TipoInfeccao),
     intersection(SintomasDaDoenca, SintomasEscolhidos, SintomasCorrespondentes),
     length(SintomasCorrespondentes, NumCorrespondentes),
     length(SintomasEscolhidos, NumTotal),
-    (NumTotal > 0 -> Probabilidade is NumCorrespondentes / NumTotal * 100; Probabilidade is 0).
+    length(SintomasDaDoenca, NumDoenca),
+    (NumTotal > 0 -> Probabilidade is ((NumCorrespondentes / NumTotal) + (NumCorrespondentes / NumDoenca)) / 2 * 100; Probabilidade is 0).
+
+filtrar_doencas(TipoInfeccao, Sintomas, DoencasFiltradas) :-
+    findall((Nome, SintomasDoenca), 
+            (doenca(Nome, SintomasDoenca, Tipos), 
+            member(TipoInfeccao, Tipos), 
+            sublist(SintomasDoenca, Sintomas)),
+            DoencasFiltradas).
+
+imprimir_sintomas([]).
+imprimir_sintomas([Sintoma|T]) :-
+    write(Sintoma),
+    nl,
+    imprimir_sintomas(T).
+
+imprimir_tipos_infeccao :-
+    write('Tipos de infecção disponíveis:'), nl,
+    forall(tipo_infeccao(Id, Descricao), (
+        format('~w: ~w~n', [Id, Descricao])
+    )).
+
+sintomas_por_tipo_infeccao(TipoInfeccao, Sintomas) :-
+    findall((Id, Descricao), 
+            (sintoma(Id, Descricao), 
+            doenca(_, SintomasDoenca, Tipos), 
+            member(TipoInfeccao, Tipos), 
+            member(Id, SintomasDoenca)),
+            Sintomas).
+
+sintomas_por_tipos_infeccao([], []).
+sintomas_por_tipos_infeccao([Tipo | TiposRestantes], Sintomas) :-
+    sintomas_por_tipo_infeccao(Tipo, SintomasTipo),
+    sintomas_por_tipos_infeccao(TiposRestantes, SintomasRestantes),
+    append(SintomasTipo, SintomasRestantes, Sintomas).
+
+remover_repetidos([], []).
+remover_repetidos([H | T], ListaSemRepetidos) :-
+    member(H, T),
+    !,
+    remover_repetidos(T, ListaSemRepetidos).
+remover_repetidos([H | T], [H | T1]) :-
+    remover_repetidos(T, T1).
 
 % Predicado inicial
-:- initialization(main).
+% :- initialization(main).
 
 main :-
-    write('Lista de sintomas disponíveis:'), nl,
-    write('1. Febre'), nl,
-    write('2. Tosse'), nl,
-    write('3. Dor de cabeça'), nl,
-    write('4. Fadiga'), nl,
+    imprimir_tipos_infeccao,
+    write('Escolha os modos de infeçcão que possui (digite os números separados por vírgula): '),
+    read_string(user_input, "\n", "\r", _, InfeccoesString),
+    string_para_lista_numero(InfeccoesString, InfeccoesEscolhidos),
+    sintomas_por_tipos_infeccao(InfeccoesEscolhidos, Sintomas),
+    remover_repetidos(Sintomas, SintomasFiltrados),
+    nl,
+    write('Sintomas disponíveis:'),
+    nl, 
+    imprimir_sintomas(SintomasFiltrados),
+    nl,
     write('Escolha os sintomas que possui (digite os números separados por vírgula): '),
+    nl,
     read_string(user_input, "\n", "\r", _, SintomasString),
     string_para_lista_numero(SintomasString, SintomasEscolhidos), 
     diagnostico(SintomasEscolhidos),
