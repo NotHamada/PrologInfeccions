@@ -57,6 +57,9 @@ sintoma(36, "Feridas na pele").
 sintoma(37, "Verrugas genitais").
 sintoma(38, "Ferida genital").
 sintoma(39, "Dor ao urinar").
+sintoma(40, "Dor de garganta").
+sintoma(41, "Dor no peito").
+sintoma(42, "Coriza").
 
 tipo_infeccao(1, "Contato com agua contaminada").
 tipo_infeccao(2, "Contato com solo contaminado").
@@ -94,10 +97,10 @@ doenca("Febre amarela", [4, 10, 14, 13, 26], [8]).
 doenca("Malaria", [4, 10, 27, 28], [8]).
 
 doenca("Caxumba", [4, 10, 29], [10]).
-doenca("Difteria", [4, dor_de_garganta, 30], [9]).
-doenca("Gripe", [4, 10, dor_de_garganta, 18], [9]).
-doenca("Pneumonia", [4, 18, 30, dor_no_peito], [9]).
-doenca("Sarampo", [4, 10, 18, coriza, 21], [9]).
+doenca("Difteria", [4, 40, 30], [9]).
+doenca("Gripe", [4, 10, 40, 18], [9]).
+doenca("Pneumonia", [4, 18, 30, 41], [9]).
+doenca("Sarampo", [4, 10, 18, 42, 21], [9]).
 doenca("Sars", [4, 10, 18, 30], [9]).
 doenca("Rubeola", [4, 10, 17, 21], [9]).
 doenca("Tuberculose", [18, 31, 11, 4], [9]).
@@ -114,27 +117,21 @@ doenca("Papilomavirus", [37], [11]).
 doenca("Sifilis", [38, 21], [11]).
 doenca("Uretrite", [39], [11]).
 
-% Predicado para verificar se uma doença é possível com base nos sintomas escolhidos
-possivel_doenca(SintomasEscolhidos, Doenca) :-
-    doenca(Doenca, SintomasDaDoenca, TipoInfeccao),
-    print(TipoInfeccao),
-    subset(SintomasEscolhidos, SintomasDaDoenca).
-
-% Verifica se todos os elementos de Lista1 estão contidos em Lista2
-subset([], _).
-subset([H|T], List) :-
-    member(H, List),
-    subset(T, List).
-
 % Predicado principal para fazer o diagnóstico
-diagnostico(SintomasEscolhidos) :-
-    write('Possíveis doenças com base nos sintomas escolhidos:'), nl,
-    findall(Doenca-Probabilidade, (doenca(Doenca, _, _), probabilidade_doenca(SintomasEscolhidos, Doenca, Probabilidade)), DoencasProbabilidades),
-    print_doencas_probabilidades(DoencasProbabilidades).
+diagnostico(SintomasEscolhidos, []).
+diagnostico(SintomasEscolhidos, [InfeccaoEscolhido|T]) :-
+    tipo_infeccao(InfeccaoEscolhido, TipoInfeccao),
+    write(TipoInfeccao),
+    nl,
+    findall(Probabilidade-Doenca, (doenca(Doenca, _, Tipos), member(InfeccaoEscolhido, Tipos), probabilidade_doenca(SintomasEscolhidos, Probabilidade, Doenca)), DoencasProbabilidades),
+    ordenar_decrescente(DoencasProbabilidades, DoencasProbabilidadesOrdenadas),
+    print_doencas_probabilidades(DoencasProbabilidadesOrdenadas),
+    nl,
+    diagnostico(SintomasEscolhidos, T).
 
 % Predicado para imprimir as doenças possíveis com suas probabilidades
 print_doencas_probabilidades([]).
-print_doencas_probabilidades([Doenca-Probabilidade|T]) :-
+print_doencas_probabilidades([Probabilidade-Doenca|T]) :-
     format('~w: ~2f%~n', [Doenca, Probabilidade]),
     print_doencas_probabilidades(T).
 
@@ -143,20 +140,13 @@ string_para_lista_numero(String, Lista) :-
     atomic_list_concat(StringList, ',', String),
     maplist(atom_number, StringList, Lista).
 
-probabilidade_doenca(SintomasEscolhidos, Doenca, Probabilidade) :-
-    doenca(Doenca, SintomasDaDoenca, TipoInfeccao),
+probabilidade_doenca(SintomasEscolhidos, Probabilidade, Doenca) :-
+    doenca(Doenca, SintomasDaDoenca, _),
     intersection(SintomasDaDoenca, SintomasEscolhidos, SintomasCorrespondentes),
     length(SintomasCorrespondentes, NumCorrespondentes),
     length(SintomasEscolhidos, NumTotal),
     length(SintomasDaDoenca, NumDoenca),
     (NumTotal > 0 -> Probabilidade is ((NumCorrespondentes / NumTotal) + (NumCorrespondentes / NumDoenca)) / 2 * 100; Probabilidade is 0).
-
-filtrar_doencas(TipoInfeccao, Sintomas, DoencasFiltradas) :-
-    findall((Nome, SintomasDoenca), 
-            (doenca(Nome, SintomasDoenca, Tipos), 
-            member(TipoInfeccao, Tipos), 
-            sublist(SintomasDoenca, Sintomas)),
-            DoencasFiltradas).
 
 imprimir_sintomas([]).
 imprimir_sintomas([Sintoma|T]) :-
@@ -192,6 +182,15 @@ remover_repetidos([H | T], ListaSemRepetidos) :-
 remover_repetidos([H | T], [H | T1]) :-
     remover_repetidos(T, T1).
 
+inverter_lista([], []).
+inverter_lista([H|T], ListaInvertida) :-
+    inverter_lista(T, RestoInvertido),
+    append(RestoInvertido, [H], ListaInvertida).
+
+ordenar_decrescente(Lista, ListaOrdenadaDecrescente) :-
+    sort(Lista, ListaOrdenada),
+    inverter_lista(ListaOrdenada, ListaOrdenadaDecrescente).
+
 % Predicado inicial
 % :- initialization(main).
 
@@ -202,15 +201,17 @@ main :-
     string_para_lista_numero(InfeccoesString, InfeccoesEscolhidos),
     sintomas_por_tipos_infeccao(InfeccoesEscolhidos, Sintomas),
     remover_repetidos(Sintomas, SintomasFiltrados),
+    sort(SintomasFiltrados, SintomasOrdenados),
     nl,
     write('Sintomas disponíveis:'),
     nl, 
-    imprimir_sintomas(SintomasFiltrados),
+    imprimir_sintomas(SintomasOrdenados),
     nl,
     write('Escolha os sintomas que possui (digite os números separados por vírgula): '),
     nl,
     read_string(user_input, "\n", "\r", _, SintomasString),
-    string_para_lista_numero(SintomasString, SintomasEscolhidos), 
-    diagnostico(SintomasEscolhidos),
+    string_para_lista_numero(SintomasString, SintomasEscolhidos),
+    write('Possíveis doenças com base nos sintomas escolhidos:'), nl, 
+    diagnostico(SintomasEscolhidos, InfeccoesEscolhidos),
     write('Fim do diagnóstico.'), nl,
     halt.
