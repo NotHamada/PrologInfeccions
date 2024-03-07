@@ -1,3 +1,6 @@
+:- dynamic sintomas_escolhidos_paciente/1.
+:- dynamic tipos_infeccao_escolhidos/1.
+
 read_file(File, Content) :-
     open(File, read, Stream),
     read_lines(Stream, Content),
@@ -183,38 +186,100 @@ remover_repetidos([H | T], [H | T1]) :-
     remover_repetidos(T, T1).
 
 
+atualizar_sintomas_escolhidos(SintomasEscolhidos) :-
+    retractall(sintomas_escolhidos_paciente(_)), % Remove qualquer instância anterior
+    assert(sintomas_escolhidos_paciente(SintomasEscolhidos)). % Atualiza com os novos sintomas escolhidos
+
+
 % Inicia o processo de questionamento após o diagnóstico
 questionar_sistema :-
     write('Você gostaria de fazer alguma pergunta sobre o diagnóstico?'), nl,
     write('1. Por que o paciente tem essa doença?'), nl,
     write('2. Por que o paciente não tem outra doença?'), nl,
-    write('3. Por que foi perguntado sobre esse sintoma?'), nl,
+    write('3. O paciente relatou outros sintomas?'), nl,
     write('4. Sair.'), nl,
-    read(Opcao),
+    read_string(user_input, "\n", "\r", _, OpcaoString),
+    string_to_integer(OpcaoString, Opcao),
     processar_opcao(Opcao).
 
-% Processa a opção escolhida pelo usuário
+string_to_integer(String, Integer) :-
+    number_string(Integer, String).
+
 processar_opcao(1) :- questionar_doenca_x.
 processar_opcao(2) :- questionar_doenca_y.
-processar_opcao(3) :- questionar_sobre_sintoma.
+processar_opcao(3) :- adicionar_sintoma.
 processar_opcao(4) :- write('Saindo do questionamento.'), nl.
 processar_opcao(_) :- write('Opção inválida, tente novamente.'), nl, questionar_sistema.
 
-% Implementação básica das funções de questionamento
+% Questiona sobre a doença X e exibe seus sintomas
 questionar_doenca_x :-
-    write('Digite o nome da doença que você deseja saber mais: '), nl,
-    read(Doenca),
-    explicar_doenca_x(Doenca).
+    write('Digite o nome da doença para saber mais sobre seus sintomas: '), nl,
+    read_line_to_string(user_input, Doenca),
+    (   doenca(Doenca, SintomasIds, _) ->
+        findall(Sintoma, (member(Id, SintomasIds), sintoma(Id, Sintoma)), Sintomas),
+        write('Sintomas de '), write(Doenca), write(':'), nl,
+        imprimir_sintomas_lista(Sintomas), nl, questionar_sistema
+    ;   write('Doença não encontrada.'), nl, questionar_sistema
+    ).
 
+% Imprime a lista de sintomas
+imprimir_sintomas_lista([]).
+imprimir_sintomas_lista([Sintoma|Resto]) :-
+    write('- '), write(Sintoma), nl,
+    imprimir_sintomas_lista(Resto).
+
+% Questiona por que o paciente não tem outra doença específica
 questionar_doenca_y :-
-    write('Digite o nome da doença que você quer saber por que não foi diagnosticada: '), nl,
-    read(Doenca),
-    explicar_ausencia_doenca_y(Doenca).
+    write('Digite o nome da doença para saber por que não foi diagnosticada: '), nl,
+    read_line_to_string(user_input, DoencaInput),
+    string_lower(DoencaInput, DoencaLower), % Converte a entrada para minúsculas
+    (   doenca(Doenca, SintomasIdsDaDoenca, _),
+        string_lower(Doenca, DoencaNomeLower), % Converte o nome da doença para minúsculas
+        DoencaLower = DoencaNomeLower,
+        sintomas_escolhidos_paciente(SintomasEscolhidos) ->
+        findall(Sintoma, (member(Id, SintomasIdsDaDoenca), sintoma(Id, Sintoma)), SintomasDaDoenca),
+        findall(SintomaEscolhido, (member(IdEscolhido, SintomasEscolhidos), sintoma(IdEscolhido, SintomaEscolhido)), SintomasEscolhidosNomes),
+        subtract(SintomasDaDoenca, SintomasEscolhidosNomes, SintomasFaltantes),
+        (   SintomasFaltantes \= [] ->
+            write('O paciente não apresenta os seguintes sintomas necessários para esta doença: '), nl,
+            imprimir_sintomas_lista(SintomasFaltantes)
+        ;   write('O paciente apresenta todos os sintomas, mas outros fatores podem ter influenciado o diagnóstico.'), nl
+        )
+    ;   write('Doença não encontrada ou sintomas do paciente não registrados.'), nl
+    ),
+    nl, questionar_sistema.
 
-questionar_sobre_sintoma :-
-    write('Digite o sintoma sobre o qual você quer saber mais: '), nl,
-    read(Sintoma),
-    explicar_sobre_sintoma(Sintoma).
+listar_sintomas_nao_escolhidos :-
+    tipos_infeccao_escolhidos(TiposInfeccaoEscolhidos),
+    sintomas_por_tipos_infeccao(TiposInfeccaoEscolhidos, SintomasRelevantes),
+    sintomas_escolhidos_paciente(SintomasEscolhidosIds),
+    findall(ID, (member(ID-_, SintomasRelevantes), \+ member(ID, SintomasEscolhidosIds)), IDsSintomasNaoEscolhidos),
+    findall(Sintoma, (member(ID, IDsSintomasNaoEscolhidos), sintoma(ID, Sintoma)), SintomasNaoEscolhidos),
+    imprimir_sintomas_nao_escolhidos(SintomasNaoEscolhidos).
+
+imprimir_sintomas_nao_escolhidos([]) :-
+    write('Todos os sintomas relevantes já foram escolhidos.'), nl.
+imprimir_sintomas_nao_escolhidos([Sintoma|T]) :-
+    write(Sintoma), nl,
+    imprimir_sintomas_nao_escolhidos(T).
+
+
+adicionar_sintoma :-
+    listar_sintomas_nao_escolhidos,
+    write('Digite os números dos sintomas adicionais que deseja adicionar (separados por vírgula), ou deixe em branco para nenhum: '), nl,
+    read_string(user_input, "\n", "\r", _, SintomasString),
+    (   SintomasString = "" -> write('Nenhum sintoma adicional foi adicionado.'), nl; % Se nenhuma entrada, não faça nada
+        string_para_lista_numero(SintomasString, SintomasAdicionaisIds),
+        sintomas_escolhidos_paciente(SintomasEscolhidos),
+        union(SintomasEscolhidos, SintomasAdicionaisIds, SintomasAtualizados),
+        retractall(sintomas_escolhidos_paciente(_)),
+        assert(sintomas_escolhidos_paciente(SintomasAtualizados)),
+        write('Sintomas atualizados.'), nl,
+        tipos_infeccao_escolhidos(TiposInfeccaoEscolhidos),
+        diagnostico(SintomasAtualizados, TiposInfeccaoEscolhidos) % Reavalia as doenças com base nos sintomas atualizados
+    ),
+    questionar_sistema.
+
 
 inverter_lista([], []).
 inverter_lista([H|T], ListaInvertida) :-
@@ -234,6 +299,8 @@ main :-
     write('Escolha os modos de infecção do paciente (digite os números separados por vírgula): '),
     read_string(user_input, "\n", "\r", _, InfeccoesString),
     string_para_lista_numero(InfeccoesString, InfeccoesEscolhidos),
+    retractall(tipos_infeccao_escolhidos(_)),
+    assert(tipos_infeccao_escolhidos(InfeccoesEscolhidos)),
     sintomas_por_tipos_infeccao(InfeccoesEscolhidos, Sintomas),
     remover_repetidos(Sintomas, SintomasFiltrados),
     sort(SintomasFiltrados, SintomasOrdenados),
@@ -242,13 +309,15 @@ main :-
     nl, 
     imprimir_sintomas(SintomasOrdenados),
     nl,
-    write('Escolha os sintomas o paciente possui (digite os números separados por vírgula): '),
+    write('Escolha os sintomas que o paciente possui (digite os números separados por vírgula): '),
     nl,
     read_string(user_input, "\n", "\r", _, SintomasString),
     string_para_lista_numero(SintomasString, SintomasEscolhidos),
+    atualizar_sintomas_escolhidos(SintomasEscolhidos),
     write('Possíveis doenças com base nos sintomas escolhidos:'), nl, 
     diagnostico(SintomasEscolhidos, InfeccoesEscolhidos),
-    write('Fim do diagnóstico.'), nl,
+    questionar_sistema, 
+    write('Fim do diagnóstico e questionamento.'), nl.
     halt.
 
     
