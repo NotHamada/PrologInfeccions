@@ -165,7 +165,7 @@ imprimir_sintomas([Sintoma|T]) :-
     imprimir_sintomas(T).
 
 imprimir_tipos_infeccao :-
-    write('Tipos de infecção disponíveis:'), nl,
+    write('O paciente passou por:'), nl,
     forall(tipo_infeccao(Id, Descricao), (
         format('~w: ~w~n', [Id, Descricao])
     )).
@@ -192,25 +192,60 @@ remover_repetidos([H | T], ListaSemRepetidos) :-
 remover_repetidos([H | T], [H | T1]) :-
     remover_repetidos(T, T1).
 
+% Inicia o processo de questionamento após o diagnóstico
+questionar_sistema :-
+    write('Você gostaria de fazer alguma pergunta sobre o diagnóstico?'), nl,
+    write('1. Por que o paciente tem essa doença?'), nl,
+    write('2. Por que o paciente não tem outra doença?'), nl,
+    write('3. Por que foi perguntado sobre esse sintoma?'), nl,
+    write('4. Sair.'), nl,
+    read(Opcao),
+    processar_opcao(Opcao).
+
+% Processa a opção escolhida pelo usuário
+processar_opcao(1) :- questionar_doenca_x.
+processar_opcao(2) :- questionar_doenca_y.
+processar_opcao(3) :- questionar_sobre_sintoma.
+processar_opcao(4) :- write('Saindo do questionamento.'), nl.
+processar_opcao(_) :- write('Opção inválida, tente novamente.'), nl, questionar_sistema.
+
+% Implementação básica das funções de questionamento
+questionar_doenca_x :-
+    write('Digite o nome da doença que você deseja saber mais: '), nl,
+    read(Doenca),
+    explicar_doenca_x(Doenca).
+
+questionar_doenca_y :-
+    write('Digite o nome da doença que você quer saber por que não foi diagnosticada: '), nl,
+    read(Doenca),
+    explicar_ausencia_doenca_y(Doenca).
+
+questionar_sobre_sintoma :-
+    write('Digite o sintoma sobre o qual você quer saber mais: '), nl,
+    read(Sintoma),
+    explicar_sobre_sintoma(Sintoma).
+
 % Predicado inicial
 % :- initialization(main).
 
 main :-
     imprimir_tipos_infeccao,
-    write('Escolha os modos de infeçcão que possui (digite os números separados por vírgula): '),
+    write('Escolha os modos de infecção do paciente (digite os números separados por vírgula): '),
     read_string(user_input, "\n", "\r", _, InfeccoesString),
     string_para_lista_numero(InfeccoesString, InfeccoesEscolhidos),
     sintomas_por_tipos_infeccao(InfeccoesEscolhidos, Sintomas),
     remover_repetidos(Sintomas, SintomasFiltrados),
     nl,
-    write('Sintomas disponíveis:'),
+    write('Sintomas:'),
     nl, 
     imprimir_sintomas(SintomasFiltrados),
     nl,
-    write('Escolha os sintomas que possui (digite os números separados por vírgula): '),
+    write('Escolha os sintomas o paciente possui (digite os números separados por vírgula): '),
     nl,
     read_string(user_input, "\n", "\r", _, SintomasString),
     string_para_lista_numero(SintomasString, SintomasEscolhidos), 
     diagnostico(SintomasEscolhidos),
     write('Fim do diagnóstico.'), nl,
     halt.
+
+    
