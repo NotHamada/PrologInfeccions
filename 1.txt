@@ -1,0 +1,9 @@
+Relatório de previsão de infecções:
+
+Data de atendimento: 1
+
+Paciente: 1
+Idade: 1
+
+Modos de infecção do paciente:
+Contato com agua contaminada

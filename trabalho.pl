@@ -331,8 +331,7 @@ ordenar_decrescente(Lista, ListaOrdenadaDecrescente) :-
 join_strings(Strings, Sep, Resultado) :-
     atomic_list_concat(Strings, Sep, Resultado).
 
-gerar_relatorio(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento) :-
-    join_strings([NomeDoPaciente, "txt"], '.', File),
+gerar_cabecalho(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento, File) :-
     create_file("Relatório de previsão de infecções:", File),
     join_strings(["\n\nData de atendimento:", DataDoAtendimento], ' ', Data),
     append_to_file(File, Data),
@@ -340,6 +339,12 @@ gerar_relatorio(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento) :-
     join_strings(["Idade:", IdadeDoPaciente], ' ', LinhaIdadeDoPaciente),
     append_to_file(File, LinhaNomeDoPaciente),
     append_to_file(File, LinhaIdadeDoPaciente).
+
+gerar_tipos_de_infeccao([], File).
+gerar_tipos_de_infeccao([H|T], File) :-
+    tipo_infeccao(H, Descricao),
+    append_to_file(File, Descricao),
+    gerar_tipos_de_infeccao(T, File).
 
 % Predicado inicial
 % :- initialization(main).
@@ -377,5 +382,10 @@ main :-
     write('Gerando o relatório do paciente...'), nl,
     write('O resultado do protótipo é apenas informativo.'), nl,
     write('Consulte um médico para obter um diagnóstico correto e preciso!'), nl,
-    gerar_relatorio(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento),
+    join_strings([NomeDoPaciente, "txt"], '.', File),
+    gerar_cabecalho(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento, File),    
+    append_to_file(File, "\nModos de infecção do paciente:"),
+    gerar_tipos_de_infeccao(InfeccoesEscolhidos, File),
+    % gerar_sintomas(),
+    % gerar_doencas_possiveis(),
     halt.

@@ -1,0 +1,12 @@
+Relatório de previsão de infecções:
+
+Data de atendimento: 2
+
+Paciente: 2
+Idade: 2
+
+Modos de infecção do paciente:
+Contato com agua contaminada
+Contato com solo contaminado
+Contato com alimento contaminado
+Mordida de animal infectado
