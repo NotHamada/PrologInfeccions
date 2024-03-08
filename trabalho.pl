@@ -1,6 +1,11 @@
 :- dynamic sintomas_escolhidos_paciente/1.
 :- dynamic tipos_infeccao_escolhidos/1.
 
+create_file(Texto, File) :-
+    open(File, write, Stream),
+    write(Stream, Texto),
+    close(Stream).
+
 read_file(File, Content) :-
     open(File, read, Stream),
     read_lines(Stream, Content),
@@ -292,11 +297,11 @@ questionar_escolha_sintoma :-
     string_to_integer(NumberString, Number),
     (   sintoma(Number, Sintoma) ->
         write('Sintoma escolhido: '), write(Sintoma), nl,
-        findall(Doenca, (doenca(Doenca, Sintomas, _), member(Number, Sintomas)), ListaDoencas),
+        findall(Doenca, (doenca(Doenca, Sintomas, _), member(Number, Sintomas)), ListaDoencas), nl,
         write('Doenças associadas a esse sintoma: '), nl,
         imprimir_lista_doencas(ListaDoencas)
     ;   write('Número inválido.'), nl
-    ),
+    ), nl,
     questionar_sistema.
     
 
@@ -323,11 +328,29 @@ ordenar_decrescente(Lista, ListaOrdenadaDecrescente) :-
     sort(Lista, ListaOrdenada),
     inverter_lista(ListaOrdenada, ListaOrdenadaDecrescente).
 
+join_strings(Strings, Sep, Resultado) :-
+    atomic_list_concat(Strings, Sep, Resultado).
+
+gerar_relatorio(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento) :-
+    join_strings([NomeDoPaciente, "txt"], '.', File),
+    create_file("Relatório de previsão de infecções:", File),
+    join_strings(["\n\nData de atendimento:", DataDoAtendimento], ' ', Data),
+    append_to_file(File, Data),
+    join_strings(["\nPaciente:", NomeDoPaciente], ' ', LinhaNomeDoPaciente),
+    join_strings(["Idade:", IdadeDoPaciente], ' ', LinhaIdadeDoPaciente),
+    append_to_file(File, LinhaNomeDoPaciente),
+    append_to_file(File, LinhaIdadeDoPaciente).
 
 % Predicado inicial
 % :- initialization(main).
 
 main :-
+    write('Nome do paciente: '),
+    read_string(user_input, "\n", "\r", _, NomeDoPaciente),
+    write('Idade do paciente: '),
+    read_string(user_input, "\n", "\r", _, IdadeDoPaciente),
+    write('Data da consulta: '),
+    read_string(user_input, "\n", "\r", _, DataDoAtendimento),
     imprimir_tipos_infeccao,
     write('Escolha os modos de infecção do paciente (digite os números separados por vírgula): '),
     read_string(user_input, "\n", "\r", _, InfeccoesString),
@@ -351,5 +374,6 @@ main :-
     diagnostico(SintomasEscolhidos, InfeccoesEscolhidos),
     questionar_sistema, 
     write('Fim do diagnóstico e questionamento.'), nl,
-    write('Gerando o relatório do paciente...'),
+    write('Gerando o relatório do paciente...'), nl,
+    gerar_relatorio(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento),
     halt.
