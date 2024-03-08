@@ -98,7 +98,7 @@ atualizar_sintomas_escolhidos(SintomasEscolhidos) :-
 
 
 % Inicia o processo de questionamento após o diagnóstico
-questionar_sistema :-
+questionar_sistema(File) :-
     write('Você gostaria de fazer alguma pergunta sobre o diagnóstico?'), nl,
     write('1. Por que o paciente tem essa doença?'), nl,
     write('2. Por que o paciente não tem outra doença?'), nl,
@@ -107,27 +107,27 @@ questionar_sistema :-
     write('5. Sair.'), nl,
     read_string(user_input, "\n", "\r", _, OpcaoString),
     string_to_integer(OpcaoString, Opcao),
-    processar_opcao(Opcao).
+    processar_opcao(Opcao, File).
 
 string_to_integer(String, Integer) :-
     number_string(Integer, String).
 
-processar_opcao(1) :- questionar_doenca_x.
-processar_opcao(2) :- questionar_doenca_y.
-processar_opcao(3) :- adicionar_sintoma.
-processar_opcao(4) :- questionar_escolha_sintoma.
-processar_opcao(5) :- write('Saindo do questionamento.'), nl.
-processar_opcao(_) :- write('Opção inválida, tente novamente.'), nl, questionar_sistema.
+processar_opcao(1, File) :- questionar_doenca_x(File).
+processar_opcao(2, File) :- questionar_doenca_y(File).
+processar_opcao(3, File) :- adicionar_sintoma(File).
+processar_opcao(4, File) :- questionar_escolha_sintoma(File).
+processar_opcao(5, File) :- write('Saindo do questionamento.'), nl.
+processar_opcao(_, File) :- write('Opção inválida, tente novamente.'), nl, questionar_sistema(File).
 
 % Questiona sobre a doença X e exibe seus sintomas
-questionar_doenca_x :-
+questionar_doenca_x(File) :-
     write('Digite o nome da doença para saber mais sobre seus sintomas: '), nl,
     read_line_to_string(user_input, Doenca),
     (   doenca(Doenca, SintomasIds, _) ->
         findall(Sintoma, (member(Id, SintomasIds), sintoma(Id, Sintoma)), Sintomas),
         write('Sintomas de '), write(Doenca), write(':'), nl,
-        imprimir_sintomas_lista(Sintomas), nl, questionar_sistema
-    ;   write('Doença não encontrada.'), nl, questionar_sistema
+        imprimir_sintomas_lista(Sintomas), nl, questionar_sistema(File)
+    ;   write('Doença não encontrada.'), nl, questionar_sistema(File)
     ).
 
 % Imprime a lista de sintomas
@@ -137,7 +137,7 @@ imprimir_sintomas_lista([Sintoma|Resto]) :-
     imprimir_sintomas_lista(Resto).
 
 % Questiona por que o paciente não tem outra doença específica
-questionar_doenca_y :-
+questionar_doenca_y(File) :-
     write('Digite o nome da doença para saber por que não foi diagnosticada: '), nl,
     read_line_to_string(user_input, DoencaInput),
     string_lower(DoencaInput, DoencaLower), % Converte a entrada para minúsculas
@@ -155,7 +155,7 @@ questionar_doenca_y :-
         )
     ;   write('Doença não encontrada ou sintomas do paciente não registrados.'), nl
     ),
-    nl, questionar_sistema.
+    nl, questionar_sistema(File).
 
 listar_sintomas_nao_escolhidos :-
     tipos_infeccao_escolhidos(TiposInfeccaoEscolhidos),
@@ -174,7 +174,7 @@ imprimir_sintomas_nao_escolhidos([Id-Descricao|T]) :-
     imprimir_sintomas_nao_escolhidos(T).
 
 
-adicionar_sintoma :-
+adicionar_sintoma(File) :-
     listar_sintomas_nao_escolhidos,
     write('Digite os números dos sintomas adicionais que deseja adicionar (separados por vírgula), ou deixe em branco para nenhum: '), nl,
     read_string(user_input, "\n", "\r", _, SintomasString),
@@ -186,11 +186,15 @@ adicionar_sintoma :-
         assert(sintomas_escolhidos_paciente(SintomasAtualizados)),
         write('Sintomas atualizados.'), nl,
         tipos_infeccao_escolhidos(TiposInfeccaoEscolhidos),
-        diagnostico(SintomasAtualizados, TiposInfeccaoEscolhidos) % Reavalia as doenças com base nos sintomas atualizados
+        diagnostico(SintomasAtualizados, TiposInfeccaoEscolhidos),
+        append_to_file(File, "Sintomas adicionados:"),
+        gerar_sintomas(SintomasAtualizados, File),
+        append_to_file(File, "\nNovas porcentagens:"),
+        gerar_doencas_possiveis(SintomasAtualizados, File, TiposInfeccaoEscolhidos) % Reavalia as doenças com base nos sintomas atualizados
     ),
-    questionar_sistema.
+    questionar_sistema(File).
 
-questionar_escolha_sintoma :-
+questionar_escolha_sintoma(File) :-
     sintomas_escolhidos_paciente(SintomasEscolhidos),
     write('Sintomas escolhidos:'), nl,
     imprimir_sintomas_escolhidos(SintomasEscolhidos),
@@ -204,7 +208,7 @@ questionar_escolha_sintoma :-
         imprimir_lista_doencas(ListaDoencas)
     ;   write('Número inválido.'), nl
     ), nl,
-    questionar_sistema.
+    questionar_sistema(File).
     
 
 % Função para imprimir os sintomas escolhidos
@@ -263,6 +267,7 @@ gerar_doencas_possiveis(SintomasEscolhidos, File, [H|T]) :-
     ordenar_decrescente(DoencasProbabilidades, DoencasProbabilidadesOrdenadas),
     gerar_linhas_da_doenca(DoencasProbabilidadesOrdenadas, File),
     nl,
+    append_to_file(File, "\n"),
     gerar_doencas_possiveis(SintomasEscolhidos, File, T).
 
 gerar_linhas_da_doenca([], File).
@@ -302,11 +307,7 @@ main :-
     atualizar_sintomas_escolhidos(SintomasEscolhidos),
     write('Possíveis doenças com base nos sintomas escolhidos:'), nl, 
     diagnostico(SintomasEscolhidos, InfeccoesEscolhidos),
-    questionar_sistema, 
-    write('Fim do diagnóstico e questionamento.'), nl,
-    write('Gerando o relatório do paciente...'), nl,
-    write('O resultado do protótipo é apenas informativo.'), nl,
-    write('Consulte um médico para obter um diagnóstico correto e preciso!'), nl,
+    
     join_strings([NomeDoPaciente, "txt"], '.', File),
     gerar_cabecalho(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento, File),    
     append_to_file(File, "\nModos de infecção do paciente:"),
@@ -315,4 +316,11 @@ main :-
     gerar_sintomas(SintomasEscolhidos, File),
     append_to_file(File, "\nDoenças possíveis:"),
     gerar_doencas_possiveis(SintomasEscolhidos, File, InfeccoesEscolhidos),
+    
+    questionar_sistema(File), 
+    write('Fim do diagnóstico e questionamento.'), nl,
+    write('Gerando o relatório do paciente...'), nl,
+    write('O resultado do protótipo é apenas informativo.'), nl,
+    write('Consulte um médico para obter um diagnóstico correto e preciso!'), nl,
+    
     halt.
