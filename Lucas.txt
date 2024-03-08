@@ -1,0 +1,11 @@
+Relatório de previsão de infecções:
+
+Data de atendimento: 08/03/2024
+
+Paciente: Lucas
+Idade: 21
+
+Modos de infecção do paciente:
+Contato gotículas respiratórias
+
+Sintomas do paciente:

@@ -346,6 +346,15 @@ gerar_tipos_de_infeccao([H|T], File) :-
     append_to_file(File, Descricao),
     gerar_tipos_de_infeccao(T, File).
 
+gerar_sintomas([], File).
+gerar_sintomas([H|T], File) :-
+    sintoma(H, Descricao),
+    append_to_file(File, Descricao),
+    gerar_sintomas(T, File).
+
+gerar_doencas_possiveis :-
+    
+
 % Predicado inicial
 % :- initialization(main).
 
@@ -386,6 +395,8 @@ main :-
     gerar_cabecalho(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento, File),    
     append_to_file(File, "\nModos de infecção do paciente:"),
     gerar_tipos_de_infeccao(InfeccoesEscolhidos, File),
-    % gerar_sintomas(),
-    % gerar_doencas_possiveis(),
+    append_to_file(File, "\nSintomas do paciente:"),
+    gerar_sintomas(SintomasEscolhidos, File),
+    append_to_file(File, "\nDoenças possíveis:"),
+    gerar_doencas_possiveis,
     halt.
