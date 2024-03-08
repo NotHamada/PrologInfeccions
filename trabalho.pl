@@ -375,5 +375,7 @@ main :-
     questionar_sistema, 
     write('Fim do diagnóstico e questionamento.'), nl,
     write('Gerando o relatório do paciente...'), nl,
+    write('O resultado do protótipo é apenas informativo.'), nl,
+    write('Consulte um médico para obter um diagnóstico correto e preciso!'), nl,
     gerar_relatorio(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento),
     halt.
