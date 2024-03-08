@@ -1,0 +1,25 @@
+Relatório de previsão de infecções:
+
+Data de atendimento: 1
+
+Paciente: 1
+Idade: 1
+
+Modos de infecção do paciente:
+Contato com agua contaminada
+
+Sintomas do paciente:
+Diarreia
+
+Doenças possíveis:
+Contato com agua contaminada
+Colera:66.66666666666666
+Doenca dos viajantes:62.5
+Amebas:62.5
+Poliomelite:0
+Leptospirose:0
+Hepatite E:0
+Hepatite A:0
+Febre tifoide:0
+Esquitossomose:0
+Doenca de chagas:0
