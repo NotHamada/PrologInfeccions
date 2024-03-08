@@ -28,7 +28,7 @@ append_to_file(File, Line) :-
     close(Stream).
 
 % Predicado principal para fazer o diagnóstico
-diagnostico(SintomasEscolhidos, []).
+diagnostico(_, []).
 diagnostico(SintomasEscolhidos, [InfeccaoEscolhido|T]) :-
     tipo_infeccao(InfeccaoEscolhido, TipoInfeccao),
     write(TipoInfeccao),
@@ -116,7 +116,7 @@ processar_opcao(1, File) :- questionar_doenca_x(File).
 processar_opcao(2, File) :- questionar_doenca_y(File).
 processar_opcao(3, File) :- adicionar_sintoma(File).
 processar_opcao(4, File) :- questionar_escolha_sintoma(File).
-processar_opcao(5, File) :- write('Saindo do questionamento.'), nl.
+processar_opcao(5, _) :- write('Saindo do questionamento.'), nl.
 processar_opcao(_, File) :- write('Opção inválida, tente novamente.'), nl, questionar_sistema(File).
 
 % Questiona sobre a doença X e exibe seus sintomas
@@ -246,19 +246,19 @@ gerar_cabecalho(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento, File) :-
     append_to_file(File, LinhaNomeDoPaciente),
     append_to_file(File, LinhaIdadeDoPaciente).
 
-gerar_tipos_de_infeccao([], File).
+gerar_tipos_de_infeccao([], _).
 gerar_tipos_de_infeccao([H|T], File) :-
     tipo_infeccao(H, Descricao),
     append_to_file(File, Descricao),
     gerar_tipos_de_infeccao(T, File).
 
-gerar_sintomas([], File).
+gerar_sintomas([], _).
 gerar_sintomas([H|T], File) :-
     sintoma(H, Descricao),
     append_to_file(File, Descricao),
     gerar_sintomas(T, File).
 
-gerar_doencas_possiveis(SintomasEscolhidos, File, []).
+gerar_doencas_possiveis(_, _, []).
 gerar_doencas_possiveis(SintomasEscolhidos, File, [H|T]) :-
     tipo_infeccao(H, TipoInfeccao),
     append_to_file(File, TipoInfeccao),
@@ -270,7 +270,7 @@ gerar_doencas_possiveis(SintomasEscolhidos, File, [H|T]) :-
     append_to_file(File, "\n"),
     gerar_doencas_possiveis(SintomasEscolhidos, File, T).
 
-gerar_linhas_da_doenca([], File).
+gerar_linhas_da_doenca([], _).
 gerar_linhas_da_doenca([Probabilidade-Doenca|T], File) :-
     join_strings([Doenca, ":", Probabilidade], '', LinhaDaDoenca),
     append_to_file(File, LinhaDaDoenca),
