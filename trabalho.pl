@@ -152,9 +152,8 @@ probabilidade_doenca(SintomasEscolhidos, Probabilidade, Doenca) :-
     (NumTotal > 0 -> Probabilidade is ((NumCorrespondentes / NumTotal) + (NumCorrespondentes / NumDoenca)) / 2 * 100; Probabilidade is 0).
 
 imprimir_sintomas([]).
-imprimir_sintomas([Sintoma|T]) :-
-    write(Sintoma),
-    nl,
+imprimir_sintomas([Id-Descricao|T]) :-
+    format('~w: ~w~n', [Id, Descricao]),
     imprimir_sintomas(T).
 
 imprimir_tipos_infeccao :-
@@ -164,7 +163,7 @@ imprimir_tipos_infeccao :-
     )).
 
 sintomas_por_tipo_infeccao(TipoInfeccao, Sintomas) :-
-    findall((Id, Descricao), 
+    findall(Id-Descricao, 
             (sintoma(Id, Descricao), 
             doenca(_, SintomasDoenca, Tipos), 
             member(TipoInfeccao, Tipos), 
@@ -252,15 +251,17 @@ questionar_doenca_y :-
 listar_sintomas_nao_escolhidos :-
     tipos_infeccao_escolhidos(TiposInfeccaoEscolhidos),
     sintomas_por_tipos_infeccao(TiposInfeccaoEscolhidos, SintomasRelevantes),
+    remover_repetidos(SintomasRelevantes, SintomasFiltrados),
+    sort(SintomasFiltrados, SintomasOrdenados),
     sintomas_escolhidos_paciente(SintomasEscolhidosIds),
-    findall(ID, (member(ID-_, SintomasRelevantes), \+ member(ID, SintomasEscolhidosIds)), IDsSintomasNaoEscolhidos),
-    findall(Sintoma, (member(ID, IDsSintomasNaoEscolhidos), sintoma(ID, Sintoma)), SintomasNaoEscolhidos),
+    findall(Id, (member(Id-_, SintomasOrdenados), \+ member(Id, SintomasEscolhidosIds)), IDsSintomasNaoEscolhidos),
+    findall(Id-Descricao, (member(Id, IDsSintomasNaoEscolhidos), sintoma(Id, Descricao)), SintomasNaoEscolhidos),
     imprimir_sintomas_nao_escolhidos(SintomasNaoEscolhidos).
 
 imprimir_sintomas_nao_escolhidos([]) :-
     write('Todos os sintomas relevantes já foram escolhidos.'), nl.
-imprimir_sintomas_nao_escolhidos([Sintoma|T]) :-
-    write(Sintoma), nl,
+imprimir_sintomas_nao_escolhidos([Id-Descricao|T]) :-
+    format('~w: ~w~n', [Id, Descricao]),
     imprimir_sintomas_nao_escolhidos(T).
 
 
@@ -317,7 +318,6 @@ main :-
     write('Possíveis doenças com base nos sintomas escolhidos:'), nl, 
     diagnostico(SintomasEscolhidos, InfeccoesEscolhidos),
     questionar_sistema, 
-    write('Fim do diagnóstico e questionamento.'), nl.
+    write('Fim do diagnóstico e questionamento.'), nl,
+    write('Gerando o relatório do paciente...'),
     halt.
-
-    
