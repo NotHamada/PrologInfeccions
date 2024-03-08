@@ -352,8 +352,22 @@ gerar_sintomas([H|T], File) :-
     append_to_file(File, Descricao),
     gerar_sintomas(T, File).
 
-gerar_doencas_possiveis :-
-    
+gerar_doencas_possiveis(SintomasEscolhidos, File, []).
+gerar_doencas_possiveis(SintomasEscolhidos, File, [H|T]) :-
+    tipo_infeccao(H, TipoInfeccao),
+    append_to_file(File, TipoInfeccao),
+    nl,
+    findall(Probabilidade-Doenca, (doenca(Doenca, _, Tipos), member(H, Tipos), probabilidade_doenca(SintomasEscolhidos, Probabilidade, Doenca)), DoencasProbabilidades),
+    ordenar_decrescente(DoencasProbabilidades, DoencasProbabilidadesOrdenadas),
+    gerar_linhas_da_doenca(DoencasProbabilidadesOrdenadas, File),
+    nl,
+    gerar_doencas_possiveis(SintomasEscolhidos, File, T).
+
+gerar_linhas_da_doenca([], File).
+gerar_linhas_da_doenca([Probabilidade-Doenca|T], File) :-
+    join_strings([Doenca, ":", Probabilidade], '', LinhaDaDoenca),
+    append_to_file(File, LinhaDaDoenca),
+    gerar_linhas_da_doenca(T, File).
 
 % Predicado inicial
 % :- initialization(main).
@@ -398,5 +412,5 @@ main :-
     append_to_file(File, "\nSintomas do paciente:"),
     gerar_sintomas(SintomasEscolhidos, File),
     append_to_file(File, "\nDoenças possíveis:"),
-    gerar_doencas_possiveis,
+    gerar_doencas_possiveis(SintomasEscolhidos, File, InfeccoesEscolhidos),
     halt.
