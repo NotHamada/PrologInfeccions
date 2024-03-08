@@ -197,7 +197,8 @@ questionar_sistema :-
     write('1. Por que o paciente tem essa doença?'), nl,
     write('2. Por que o paciente não tem outra doença?'), nl,
     write('3. O paciente relatou outros sintomas?'), nl,
-    write('4. Sair.'), nl,
+    write('4. Escolha dos sintomas.'), nl,
+    write('5. Sair.'), nl,
     read_string(user_input, "\n", "\r", _, OpcaoString),
     string_to_integer(OpcaoString, Opcao),
     processar_opcao(Opcao).
@@ -208,7 +209,8 @@ string_to_integer(String, Integer) :-
 processar_opcao(1) :- questionar_doenca_x.
 processar_opcao(2) :- questionar_doenca_y.
 processar_opcao(3) :- adicionar_sintoma.
-processar_opcao(4) :- write('Saindo do questionamento.'), nl.
+processar_opcao(4) :- questionar_escolha_sintoma.
+processar_opcao(5) :- write('Saindo do questionamento.'), nl.
 processar_opcao(_) :- write('Opção inválida, tente novamente.'), nl, questionar_sistema.
 
 % Questiona sobre a doença X e exibe seus sintomas
@@ -279,6 +281,36 @@ adicionar_sintoma :-
         diagnostico(SintomasAtualizados, TiposInfeccaoEscolhidos) % Reavalia as doenças com base nos sintomas atualizados
     ),
     questionar_sistema.
+
+questionar_escolha_sintoma :-
+    sintomas_escolhidos_paciente(SintomasEscolhidos),
+    write('Sintomas escolhidos:'), nl,
+    imprimir_sintomas_escolhidos(SintomasEscolhidos),
+    write('Qual sintoma você deseja questionar? Digite o número.'), nl,
+    read_string(user_input, "\n", "\r", _, NumberString),
+    string_to_integer(NumberString, Number),
+    (   sintoma(Number, Sintoma) ->
+        write('Sintoma escolhido: '), write(Sintoma), nl,
+        findall(Doenca, (doenca(Doenca, Sintomas, _), member(Number, Sintomas)), ListaDoencas),
+        write('Doenças associadas a esse sintoma: '), nl,
+        imprimir_lista_doencas(ListaDoencas)
+    ;   write('Número inválido.'), nl
+    ),
+    questionar_sistema.
+    
+
+% Função para imprimir os sintomas escolhidos
+imprimir_sintomas_escolhidos([]).
+imprimir_sintomas_escolhidos([ID|Rest]) :-
+    sintoma(ID, Sintoma),
+    format('~w: ~w~n', [ID, Sintoma]),
+    imprimir_sintomas_escolhidos(Rest).
+
+% Função para imprimir a lista de doenças
+imprimir_lista_doencas([]).
+imprimir_lista_doencas([Doenca|Rest]) :-
+    write(Doenca), nl,
+    imprimir_lista_doencas(Rest).
 
 
 inverter_lista([], []).
