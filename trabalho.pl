@@ -2,30 +2,7 @@
 :- dynamic tipos_infeccao_escolhidos/1.
 
 :- include('doencas.pl').
-
-create_file(Texto, File) :-
-    open(File, write, Stream),
-    write(Stream, Texto),
-    close(Stream).
-
-read_file(File, Content) :-
-    open(File, read, Stream),
-    read_lines(Stream, Content),
-    close(Stream).
-
-read_lines(Stream, []) :-
-    at_end_of_stream(Stream).
-
-read_lines(Stream, [Line|Rest]) :-
-    \+ at_end_of_stream(Stream),
-    read_line_to_string(Stream, Line),
-    read_lines(Stream, Rest).
-
-append_to_file(File, Line) :-
-    open(File, append, Stream),
-    write(Stream, Line),
-    write(Stream, '\n'),
-    close(Stream).
+:- include('leitura.pl').
 
 % Predicado principal para fazer o diagnóstico
 diagnostico(_, []).
@@ -276,8 +253,23 @@ gerar_linhas_da_doenca([Probabilidade-Doenca|T], File) :-
     append_to_file(File, LinhaDaDoenca),
     gerar_linhas_da_doenca(T, File).
 
-% Predicado inicial
-% :- initialization(main).
+inicializacao :-
+    write('Escolha uma opção'), nl,
+    write('1. Adicionar paciente'), nl,
+    write('2. Remover paciente'), nl,
+    write('3. Ver lista de pacientes'), nl,
+    write('4. Ver consulta do paciente'), nl,
+    write('5. Sair.'), nl,
+    read_string(user_input, "\n", "\r", _, OpcaoString),
+    string_to_integer(OpcaoString, Opcao),
+    processar_inicializacao(Opcao).
+
+processar_inicializacao(1) :- main.
+processar_inicializacao(2) :- remover_paciente.
+processar_inicializacao(3) :- listar_pacientes.
+processar_inicializacao(4) :- consultar_paciente.
+processar_inicializacao(5) :- write('Saindo do programa.'), nl.
+processar_inicializacao(_) :- write('Opção inválida, tente novamente.'), nl, inicializacao(File).
 
 main :-
     write('Nome do paciente: '),
@@ -323,5 +315,5 @@ main :-
     write('Gerando o relatório do paciente...'), nl,
     write('O resultado do protótipo é apenas informativo.'), nl,
     write('Consulte um médico para obter um diagnóstico correto e preciso!'), nl,
-    
-    halt.
+    nl,
+    inicializacao.

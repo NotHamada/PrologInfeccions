@@ -2,7 +2,7 @@
 find_txt_files(Directory, TxtFiles) :-
     directory_files(Directory, Files),
     findall(File, (member(File, Files), file_name_extension(_, 'txt', File)), TxtFiles),
-    read_files(TxtFiles).
+    print_files(TxtFiles).
 
 read_files([]).
 read_files([H|T]) :-
@@ -25,6 +25,19 @@ read_lines(Stream, [Line|Rest]) :-
     format('~w~n', [Line]),
     read_lines(Stream, Rest).
 
-% print_files([]).
-% print_files([H|T]) :-
+create_file(Texto, File) :-
+    open(File, write, Stream),
+    write(Stream, Texto),
+    close(Stream).
+    
+append_to_file(File, Line) :-
+    open(File, append, Stream),
+    write(Stream, Line),
+    write(Stream, '\n'),
+    close(Stream).
 
+print_files([]).
+print_files([H|T]) :-
+    write(H),
+    nl,
+    print_files(T).
