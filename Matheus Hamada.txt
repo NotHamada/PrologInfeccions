@@ -1,0 +1,24 @@
+Relatório de previsão de infecções:
+
+Data de atendimento: 09/03/2024
+
+Paciente: Matheus Hamada
+Idade: 21
+
+Modos de infecção do paciente:
+Picada de mosquito infectado
+
+Sintomas do paciente:
+Febre
+Dor de cabeca
+Fadiga
+
+Doenças possíveis:
+Picada de mosquito infectado
+Doenca de chagas:87.5
+Malaria:58.33333333333333
+Encefalite:58.33333333333333
+Dengue:58.33333333333333
+Febre amarela:53.333333333333336
+
+
