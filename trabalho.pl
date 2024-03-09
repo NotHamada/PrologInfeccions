@@ -254,7 +254,7 @@ gerar_linhas_da_doenca([Probabilidade-Doenca|T], File) :-
     gerar_linhas_da_doenca(T, File).
 
 inicializacao :-
-    write('Escolha uma opção'), nl,
+    write('Escolha uma opção:'), nl,
     write('1. Adicionar paciente'), nl,
     write('2. Remover paciente'), nl,
     write('3. Ver lista de pacientes'), nl,
@@ -269,7 +269,7 @@ processar_inicializacao(2) :- remover_paciente.
 processar_inicializacao(3) :- listar_pacientes.
 processar_inicializacao(4) :- consultar_paciente.
 processar_inicializacao(5) :- write('Saindo do programa.'), nl.
-processar_inicializacao(_) :- write('Opção inválida, tente novamente.'), nl, inicializacao(File).
+processar_inicializacao(_) :- write('Opção inválida, tente novamente.'), nl, inicializacao.
 
 main :-
     write('Nome do paciente: '),
