@@ -308,7 +308,8 @@ main :-
     write('Possíveis doenças com base nos sintomas escolhidos:'), nl, 
     diagnostico(SintomasEscolhidos, InfeccoesEscolhidos),
     
-    join_strings([NomeDoPaciente, "txt"], '.', File),
+    join_strings([NomeDoPaciente, "txt"], '.', Consulta),
+    join_strings(["Consultas", Consulta], '/', File),
     gerar_cabecalho(NomeDoPaciente, IdadeDoPaciente, DataDoAtendimento, File),    
     append_to_file(File, "\nModos de infecção do paciente:"),
     gerar_tipos_de_infeccao(InfeccoesEscolhidos, File),

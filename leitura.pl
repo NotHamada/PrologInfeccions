@@ -24,3 +24,7 @@ read_lines(Stream, [Line|Rest]) :-
     read_line_to_string(Stream, Line),
     format('~w~n', [Line]),
     read_lines(Stream, Rest).
+
+% print_files([]).
+% print_files([H|T]) :-
+
